@@ -1,9 +1,16 @@
+import os
 import ssl
 
 import asyncpg
 from config import DATABASE_URL
 
 _pool = None
+
+# Режим SSL для подключения к Postgres:
+#   "require"  — SSL без проверки сертификата (исходно под Render Postgres,
+#                 который требует TLS).
+#   "disable"  — без SSL, для локального Postgres без настроенного TLS.
+SSL_MODE = os.environ.get("DB_SSL", "require")
 
 
 def _build_ssl_context() -> ssl.SSLContext:
@@ -32,7 +39,7 @@ async def init_pool():
         min_size=1,
         max_size=5,
         command_timeout=30,
-        ssl=_build_ssl_context(),
+        ssl=_build_ssl_context() if SSL_MODE == "require" else False,
     )
 
 
